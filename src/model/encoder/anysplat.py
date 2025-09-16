@@ -32,7 +32,39 @@ try:
     from torch_scatter import scatter_add, scatter_max
 except ImportError:
     print("torch_scatter not found, using PyTorch native implementation")
-    from ...utils.scatter_ops import scatter_add, scatter_max
+
+    def scatter_add(src, index, dim=0, out=None, dim_size=None):
+        """PyTorch native implementation of scatter_add"""
+        if dim_size is None:
+            dim_size = int(index.max()) + 1 if index.numel() > 0 else 0
+        if out is None:
+            size = list(src.shape)
+            size[dim] = dim_size
+            out = torch.zeros(size, dtype=src.dtype, device=src.device)
+        return out.scatter_add_(dim, index, src)
+
+    def scatter_max(src, index, dim=0, out=None, dim_size=None):
+        """PyTorch native implementation of scatter_max"""
+        if dim_size is None:
+            dim_size = int(index.max()) + 1 if index.numel() > 0 else 0
+        if out is None:
+            size = list(src.shape)
+            size[dim] = dim_size
+            out = torch.full(size, float('-inf'), dtype=src.dtype, device=src.device)
+            arg_out = torch.zeros(size, dtype=torch.long, device=src.device)
+        else:
+            out, arg_out = out
+
+        # Simple implementation for most common case (dim=0)
+        if dim == 0:
+            for i in range(dim_size):
+                mask = (index == i)
+                if mask.any():
+                    masked_src = src[mask]
+                    if masked_src.numel() > 0:
+                        max_val, _ = torch.max(masked_src, dim=0)
+                        out[i] = max_val
+        return out, arg_out
 
 from ..types import Gaussians
 from .backbone import Backbone, BackboneCfg, get_backbone
