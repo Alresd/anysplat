@@ -25,7 +25,7 @@ from ..geometry.projection import get_fov
 
 @dataclass
 class DatasetScannetCfg(DatasetCfgCommon):
-    name: Literal["scannet"]
+    name: str
     roots: list[Path]
     baseline_epsilon: float
     max_fov: float
