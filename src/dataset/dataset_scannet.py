@@ -162,6 +162,7 @@ class DatasetScannet(Dataset):
             "far": self.get_bound("far", len(context_index)),
             "index": context_index,
             "valid_mask": torch.ones_like(context_images)[:, 0].bool(),  # [N, H, W]
+            "overlap": overlap,  # Add overlap from ViewSampler
         }
 
         if self.cfg.load_depth:
