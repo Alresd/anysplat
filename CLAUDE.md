@@ -21,6 +21,12 @@ pip install -r requirements.txt
 # Single node training
 python src/main.py +experiment=dl3dv trainer.num_nodes=1
 
+# ScanNet training
+./train_scannet.sh
+
+# ScanNet manual training
+python src/main.py +experiment=scannet trainer.num_nodes=1 'dataset.roots'='["/tmp/scannet"]'
+
 # Multi-node training
 export GPU_NUM=8
 export NUM_NODES=2
@@ -56,6 +62,9 @@ python inference.py
 # Quick test script with automatic model download
 ./test_model.sh
 
+# ScanNet testing
+./test_scannet.sh
+
 # Manual test command (modify paths as needed)
 CUDA_VISIBLE_DEVICES=6 python -m src.main +experiment=re10k \
 checkpointing.load=./checkpoints/re10k.ckpt \
@@ -64,6 +73,18 @@ dataset/view_sampler=evaluation \
 dataset.view_sampler.num_context_views=6 \
 dataset.view_sampler.index_path=assets/re10k_evaluation/re10k_ctx_6v_tgt_8v_n50.json \
 test.compute_scores=true
+
+# ScanNet manual test command
+CUDA_VISIBLE_DEVICES=0 python -m src.main +experiment=scannet \
+data_loader.train.batch_size=1 \
+'dataset.roots'='["/tmp/scannet"]' \
+dataset/view_sampler=evaluation \
+dataset.view_sampler.num_context_views=6 \
+dataset.view_sampler.index_path=assets/scannet_index.json \
+mode=test \
+test.compute_scores=true \
+checkpointing.pretrained_model=checkpoints/re10k.ckpt \
+output_dir=outputs/scannet-256x256
 
 # Download model programmatically
 python test_re10k.py
@@ -88,7 +109,7 @@ black src/
    - **Heads** (`src/model/encoder/heads/`): Three decoder heads (F_G, F_D, F_C) for Gaussian parameters, depth, and camera poses
 
 2. **Dataset System** (`src/dataset/`):
-   - Supports multiple datasets: CO3Dv2, DL3DV, ScanNet++
+   - Supports multiple datasets: CO3Dv2, DL3DV, ScanNet++, ScanNet
    - View samplers for different training strategies: all, arbitrary, bounded, evaluation, rank
    - Data shims for augmentation, cropping, geometry processing, loading, normalization, patching
 
@@ -98,7 +119,7 @@ black src/
 
 4. **Configuration System**:
    - Hydra-based configuration with hierarchical YAML files in `config/`
-   - Experiment configs (`config/experiment/`): dl3dv, co3d, scannetpp, re10k, multi-dataset
+   - Experiment configs (`config/experiment/`): dl3dv, co3d, scannetpp, scannet, re10k, multi-dataset
    - Model configs (`config/model/`): encoder and decoder configurations
    - Dataset configs (`config/dataset/`): dataset-specific and view sampler configurations
 
@@ -138,11 +159,15 @@ black src/
 - `inference.py`: Standalone inference script
 - `demo_gradio.py`: Gradio web interface
 - `test_model.sh`: Quick test script with automatic model download
+- `test_scannet.sh`: ScanNet testing script
+- `train_scannet.sh`: ScanNet training script
 - `test_re10k.py`: Model download and checkpoint management script
 - `src/eval_nvs.py`, `src/eval_pose.py`: Evaluation scripts for novel view synthesis and pose estimation
+- `src/dataset/dataset_scannet.py`: ScanNet dataset implementation
 - `src/misc/`: Utility functions for image I/O, camera utils, benchmarking, logging
 - `src/geometry/`: 3D geometry operations and camera embeddings
 - `src/post_opt/`: Post-optimization scripts for refining results
+- `assets/scannet_index.json`: ScanNet evaluation index configuration
 - `examples/`: Example input data and usage demonstrations
 
 ## Development Notes
