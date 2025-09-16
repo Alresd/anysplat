@@ -465,6 +465,8 @@ class EncoderAnySplat(Encoder[EncoderAnySplatCfg]):
                     conf_valid_mask = pts_conf > conf_valid
                 else:
                     conf_valid_mask = torch.ones_like(pts_conf, dtype=torch.bool)
+                # Point head doesn't produce depth map
+                depth_map = None
             elif self.cfg.pred_head_type == "depth":
                 depth_map, depth_conf = self.depth_head(
                     aggregated_tokens_list,
@@ -620,7 +622,7 @@ class EncoderAnySplat(Encoder[EncoderAnySplatCfg]):
                 extrinsic=torch.cat([extrinsic, extrinsic_padding], dim=2).inverse(),
                 intrinsic=intrinsic,
             ),
-            depth_dict=dict(depth=depth_map, conf_valid_mask=conf_valid_mask),
+            depth_dict=dict(depth=depth_map, conf_valid_mask=conf_valid_mask) if depth_map is not None else None,
             infos=infos,
             distill_infos=distill_infos,
         )
