@@ -45,6 +45,7 @@ trainer.max_steps=150000 \
 mode=test \
 test.save_video=false \
 test.save_image=false \
+wandb.mode=disabled \
 checkpointing.load=$CHECKPOINT_PATH \
 test.output_path=outputs/scannet-256x256 \
 hydra.run.dir=outputs/scannet-256x256
