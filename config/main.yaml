@@ -10,7 +10,7 @@ wandb:
   mode: online
 mode: train
 
-dataset: []
+dataset: {}
 
 data_loader:
   # Avoid having to spin up new processes to print out visualizations.
