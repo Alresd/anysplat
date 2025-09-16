@@ -53,5 +53,5 @@ test.save_gt_image=false \
 test.save_input_images=false \
 test.save_video=false \
 test.save_gaussian=false \
-checkpointing.pretrained_model=$CHECKPOINT_PATH \
+checkpointing.load=$CHECKPOINT_PATH \
 output_dir=outputs/scannet-256x256
