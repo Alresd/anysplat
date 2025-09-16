@@ -457,6 +457,14 @@ class EncoderAnySplat(Encoder[EncoderAnySplatCfg]):
                     images=image,
                     patch_start_idx=patch_start_idx,
                 )
+                # For point head, use pts_conf for confidence masking
+                if self.cfg.render_conf:
+                    conf_valid = torch.quantile(
+                        pts_conf.flatten(0, 1), self.cfg.conf_threshold
+                    )
+                    conf_valid_mask = pts_conf > conf_valid
+                else:
+                    conf_valid_mask = torch.ones_like(pts_conf, dtype=torch.bool)
             elif self.cfg.pred_head_type == "depth":
                 depth_map, depth_conf = self.depth_head(
                     aggregated_tokens_list,
@@ -466,16 +474,16 @@ class EncoderAnySplat(Encoder[EncoderAnySplatCfg]):
                 pts_all = batchify_unproject_depth_map_to_point_map(
                     depth_map, extrinsic, intrinsic
                 )
+                # For depth head, use depth_conf for confidence masking
+                if self.cfg.render_conf:
+                    conf_valid = torch.quantile(
+                        depth_conf.flatten(0, 1), self.cfg.conf_threshold
+                    )
+                    conf_valid_mask = depth_conf > conf_valid
+                else:
+                    conf_valid_mask = torch.ones_like(depth_conf, dtype=torch.bool)
             else:
                 raise ValueError(f"Invalid pred_head_type: {self.cfg.pred_head_type}")
-
-            if self.cfg.render_conf:
-                conf_valid = torch.quantile(
-                    depth_conf.flatten(0, 1), self.cfg.conf_threshold
-                )
-                conf_valid_mask = depth_conf > conf_valid
-            else:
-                conf_valid_mask = torch.ones_like(depth_conf, dtype=torch.bool)
 
         # dpt style gs_head input format
         out = self.gaussian_param_head(
