@@ -54,4 +54,5 @@ test.save_input_images=false \
 test.save_video=false \
 test.save_gaussian=false \
 checkpointing.load=$CHECKPOINT_PATH \
-output_dir=outputs/scannet-256x256
+test.output_path=outputs/scannet-256x256 \
+hydra.run.dir=outputs/scannet-256x256
