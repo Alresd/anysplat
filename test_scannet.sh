@@ -37,10 +37,9 @@ echo "Using checkpoint: $CHECKPOINT_PATH"
 
 CUDA_VISIBLE_DEVICES=0 python -m src.main +experiment=scannet \
 data_loader.train.batch_size=1 \
-'dataset.roots'='["/tmp/scannet"]' \
-dataset/view_sampler=evaluation \
-dataset.view_sampler.num_context_views=6 \
-dataset.view_sampler.index_path=assets/scannet_index.json \
+'dataset.scannet.roots'='["/tmp/scannet"]' \
+dataset.scannet.view_sampler.num_context_views=6 \
+dataset.scannet.view_sampler.num_target_views=2 \
 trainer.max_steps=150000 \
 model.encoder.num_scales=2 \
 model.encoder.upsample_factor=2 \
