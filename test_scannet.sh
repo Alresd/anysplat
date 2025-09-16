@@ -4,9 +4,9 @@
 # This script follows the pattern provided by the user
 
 # Check if model exists, if not download it
-if [ ! -f "./checkpoints/anysplat.ckpt" ] && [ ! -f "./checkpoints/re10k.ckpt" ]; then
+if [ ! -f "./checkpoints/anysplat.ckpt" ] && [ ! -f "./checkpoints/re10k.ckpt" ] && [ ! -d "./checkpoints/anysplat_hf" ]; then
     echo "No pretrained model found, downloading from Hugging Face..."
-    python download_model.py
+    python download_model_simple.py
 fi
 
 # Use the downloaded model if the specified checkpoint doesn't exist

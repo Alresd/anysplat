@@ -17,7 +17,6 @@ from torch.utils.data import Dataset
 from .dataset import DatasetCfgCommon
 from .shims.augmentation_shim import apply_augmentation_shim
 from .shims.crop_shim import apply_crop_shim
-from .shims.geometry_shim import homogenize_points
 from .shims.normalization_shim import apply_normalization_shim
 from .types import Stage
 from .view_sampler import ViewSampler, ViewSamplerEvaluation

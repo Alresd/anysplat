@@ -89,11 +89,11 @@ output_dir=outputs/scannet-256x256
 # Download model programmatically
 python test_re10k.py
 
-# Download AnySplat model from Hugging Face
-python download_model.py
+# Download AnySplat model from Hugging Face (simple version)
+python download_model_simple.py
 
-# Simple ScanNet test (directly uses HuggingFace model)
-python test_scannet_simple.py --data_dir /tmp/scannet/test
+# Direct ScanNet test (handles missing dependencies gracefully)
+python test_scannet_direct.py --data_dir /tmp/scannet
 ```
 
 ### Code Quality
@@ -168,7 +168,8 @@ black src/
 - `test_scannet.sh`: ScanNet testing script with automatic model download
 - `test_scannet_simple.py`: Simple ScanNet test using HuggingFace model directly
 - `train_scannet.sh`: ScanNet training script
-- `download_model.py`: Download AnySplat model from Hugging Face
+- `download_model_simple.py`: Simple AnySplat model downloader from Hugging Face
+- `test_scannet_direct.py`: Direct ScanNet test with graceful dependency handling
 - `test_re10k.py`: Model download and checkpoint management script
 - `src/eval_nvs.py`, `src/eval_pose.py`: Evaluation scripts for novel view synthesis and pose estimation
 - `src/dataset/dataset_scannet.py`: ScanNet dataset implementation
