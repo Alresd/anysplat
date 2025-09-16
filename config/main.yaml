@@ -10,8 +10,7 @@ wandb:
   mode: online
 mode: train
 
-#dataset:
-#  overfit_to_scene: null
+dataset: []
 
 data_loader:
   # Avoid having to spin up new processes to print out visualizations.
