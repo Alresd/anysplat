@@ -384,6 +384,11 @@ class ModelWrapper(LightningModule):
         for param in self.model.encoder.parameters():
             param.requires_grad = False
 
+        # Add using_index for loss functions that need it
+        num_context_views = batch["context"]["image"].shape[1]
+        using_index = torch.arange(num_context_views, device=gaussians.means.device)
+        batch["using_index"] = using_index
+
         b, v, _, h, w = batch["target"]["image"].shape
         output_c2ws = batch["target"]["extrinsics"]
         with torch.set_grad_enabled(True):
