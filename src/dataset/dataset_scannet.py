@@ -97,43 +97,14 @@ class DatasetScannet(Dataset):
         if not os.path.exists(path):
             path = Path(str(path)[:-2])
 
-        # Load intrinsics and extrinsics
-        try:
-            # Try to load from color directory first
-            sample_img_path = os.path.join(path, 'color', '0.jpg')
-            if not os.path.exists(sample_img_path):
-                sample_img_path = next(iter(Path(path / 'color').glob('*.jpg')))
+        # Load data following BEV-Splat approach
+        imshape = self.to_tensor(Image.open(os.path.join(path, 'color', '0.jpg'))).shape
+        extrinsics = torch.from_numpy(np.load(os.path.join(path, 'extrinsics.npy'))).float()
+        intrinsics = torch.from_numpy(np.loadtxt(os.path.join(path, 'intrinsic', 'intrinsic_color.txt'))\
+                                    [None,:3,:3].repeat(extrinsics.shape[0], 0)).float()
 
-            sample_img = Image.open(sample_img_path)
-            imshape = self.to_tensor(sample_img).shape
-
-            extrinsics = torch.from_numpy(np.load(os.path.join(path, 'extrinsics.npy'))).float()
-            intrinsics_file = os.path.join(path, 'intrinsic', 'intrinsic_color.txt')
-            if not os.path.exists(intrinsics_file):
-                # Fallback to intrinsics.txt
-                intrinsics_file = os.path.join(path, 'intrinsics.txt')
-
-            intrinsics_matrix = np.loadtxt(intrinsics_file)
-            if intrinsics_matrix.shape == (3, 3):
-                intrinsics_matrix = intrinsics_matrix[None, :3, :3].repeat(extrinsics.shape[0], 0)
-            else:
-                intrinsics_matrix = intrinsics_matrix[:, :3, :3]
-
-            intrinsics = torch.from_numpy(intrinsics_matrix).float()
-
-        except Exception as e:
-            print(f"Error loading intrinsics/extrinsics for {path}: {e}")
-            # Create dummy data
-            extrinsics = torch.eye(4).unsqueeze(0).repeat(10, 1, 1)
-            intrinsics = torch.eye(3).unsqueeze(0).repeat(10, 1, 1)
-            intrinsics[:, 0, 0] = 500  # fx
-            intrinsics[:, 1, 1] = 500  # fy
-            intrinsics[:, 0, 2] = 320  # cx
-            intrinsics[:, 1, 2] = 240  # cy
-            imshape = (3, 480, 640)
-
-        # Sample views using view_sampler
-        context_indices, target_indices = self.view_sampler.sample(
+        # Sample views using view_sampler (following BEV-Splat approach)
+        context_index, target_indices = self.view_sampler.sample(
             scene,
             extrinsics,
             intrinsics,

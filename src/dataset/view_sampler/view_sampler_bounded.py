@@ -31,14 +31,13 @@ class ViewSamplerBounded(ViewSampler[ViewSamplerBoundedCfg]):
     def sample(
         self,
         scene: str,
-        num_context_views: int,
         extrinsics: Float[Tensor, "view 4 4"],
         intrinsics: Float[Tensor, "view 3 3"],
         device: torch.device = torch.device("cpu"),
+        **kwargs,  # Accept additional arguments like 'path'
     ) -> tuple[
         Int64[Tensor, " context_view"],  # indices for context views
         Int64[Tensor, " target_view"],  # indices for target views
-        Float[Tensor, " overlap"],  # overlap
     ]:
         num_views, _, _ = extrinsics.shape
 
