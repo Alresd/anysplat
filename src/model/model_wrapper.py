@@ -308,6 +308,7 @@ class ModelWrapper(LightningModule):
         self.log("loss/grad_norm", total_norm)
         
     def test_step(self, batch, batch_idx):
+        print(f"DEBUG: Starting test_step {batch_idx}")
         batch: BatchedExample = self.data_shim(batch)
         b, v, _, h, w = batch["target"]["image"].shape
         assert b == 1
@@ -338,20 +339,31 @@ class ModelWrapper(LightningModule):
         
         # compute scores
         if self.test_cfg.compute_scores:
+            print("DEBUG: Starting compute_scores")
             overlap = batch["context"]["overlap"][0]
             overlap_tag = get_overlap_tag(overlap)
 
             rgb_pred = output.color[0]
             rgb_gt = batch["target"]["image"][0]
+
+            print("DEBUG: Computing PSNR")
+            psnr_val = compute_psnr(rgb_gt, rgb_pred).mean()
+            print("DEBUG: Computing SSIM")
+            ssim_val = compute_ssim(rgb_gt, rgb_pred).mean()
+            print("DEBUG: Computing LPIPS")
+            lpips_val = compute_lpips(rgb_gt, rgb_pred).mean()
+            print("DEBUG: All metrics computed")
+
             all_metrics = {
-                f"lpips_ours": compute_lpips(rgb_gt, rgb_pred).mean(),
-                f"ssim_ours": compute_ssim(rgb_gt, rgb_pred).mean(),
-                f"psnr_ours": compute_psnr(rgb_gt, rgb_pred).mean(),
+                f"lpips_ours": lpips_val,
+                f"ssim_ours": ssim_val,
+                f"psnr_ours": psnr_val,
             }
             methods = ['ours']
 
             self.log_dict(all_metrics)
             self.print_preview_metrics(all_metrics, methods, overlap_tag=overlap_tag)
+            print("DEBUG: Finished compute_scores")
         
         # Save images.
         (scene,) = batch["scene"]
@@ -377,7 +389,9 @@ class ModelWrapper(LightningModule):
                 add_label(vcat(*rgb_pred), "Target (Prediction)"),
             )
             save_image(comparison, path / f"{scene}.png")
-                
+
+        print(f"DEBUG: Finished test_step {batch_idx}")
+
     def test_step_align(self, batch, gaussians):
         self.model.encoder.eval()
         # freeze all parameters
