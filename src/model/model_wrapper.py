@@ -432,7 +432,7 @@ class ModelWrapper(LightningModule):
                     # Compute and log loss.
                     total_loss = 0
                     for loss_fn in self.losses:
-                        loss = loss_fn.forward(output, batch, gaussians, self.global_step)
+                        loss = loss_fn.forward(output, batch, gaussians, None, self.global_step)
                         total_loss = total_loss + loss
 
                     total_loss.backward()
