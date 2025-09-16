@@ -316,10 +316,11 @@ class ModelWrapper(LightningModule):
         
         # Render Gaussians.
         with self.benchmarker.time("encoder"):
-            gaussians = self.model.encoder(
+            encoder_output = self.model.encoder(
                 (batch["context"]["image"]+1)/2,
                 self.global_step,
-            )[0]
+            )
+            gaussians = encoder_output.gaussians
         # export_ply(gaussians.means[0], gaussians.scales[0], gaussians.rotations[0], gaussians.harmonics[0], gaussians.opacities[0], Path("gaussians.ply"))
         # align the target pose
         if self.test_cfg.align_pose:
