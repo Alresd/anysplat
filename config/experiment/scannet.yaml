@@ -1,31 +1,7 @@
 # @package _global_
+defaults:
+  - /dataset: scannet
 
 dataset:
   scannet:
-    name: scannet
     roots: ["/tmp/scannet"]
-    baseline_epsilon: 1e-3
-    max_fov: 100.0
-    make_baseline_1: false
-    augment: true
-    background_color: [0.0, 0.0, 0.0]
-    cameras_are_circular: false
-    load_depth: true
-    near: 0.5
-    far: 15.0
-    original_image_shape: [480, 640]
-    input_image_shape: [256, 256]
-    overfit_to_scene: null
-    view_sampler:
-      name: bounded
-      num_context_views: 6
-      num_target_views: 2
-      min_distance_between_context_views: 1
-      max_distance_between_context_views: 10
-      min_distance_to_context_views: 1
-      warm_up_steps: 1000
-      initial_min_distance_between_context_views: 1
-      initial_max_distance_between_context_views: 3
-      max_img_per_gpu: 8
-      min_gap_multiplier: 1
-      max_gap_multiplier: 5
