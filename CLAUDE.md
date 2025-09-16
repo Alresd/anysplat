@@ -2,14 +2,22 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## AnySplat: Feed-forward 3D Gaussian Splatting
+## Project Overview
 
-This is a research codebase for AnySplat, a transformer-based architecture for feed-forward 3D Gaussian Splatting from unconstrained views. The system predicts Gaussian parameters, depth maps, and camera poses from uncalibrated input images.
+AnySplat is a feed-forward 3D Gaussian Splatting system that reconstructs 3D scenes from uncalibrated multi-view images. The codebase implements a transformer-based architecture with three main components:
+
+- **Geometry Encoder**: Processes uncalibrated input images
+- **Three Decoder Heads**:
+  - F_G: Predicts Gaussian parameters (μ, σ, r, s, c)
+  - F_D: Predicts depth maps
+  - F_C: Predicts camera poses
+- **Differentiable Voxelization**: Converts pixel-wise Gaussians to voxelized 3D Gaussians
 
 ## Key Commands
 
 ### Environment Setup
 ```bash
+# Create conda environment
 conda create -y -n anysplat python=3.10
 conda activate anysplat
 pip install torch==2.2.0 torchvision==0.17.0 torchaudio==2.2.0 --index-url https://download.pytorch.org/whl/cu121
@@ -20,12 +28,6 @@ pip install -r requirements.txt
 ```bash
 # Single node training
 python src/main.py +experiment=dl3dv trainer.num_nodes=1
-
-# ScanNet training
-./train_scannet.sh
-
-# ScanNet manual training
-python src/main.py +experiment=scannet trainer.num_nodes=1 'dataset.roots'='["/tmp/scannet"]'
 
 # Multi-node training
 export GPU_NUM=8
@@ -44,155 +46,69 @@ torchrun \
 # Novel View Synthesis evaluation
 python src/eval_nvs.py --data_dir ...
 
-# Pose estimation evaluation
+# Pose Estimation evaluation
 python src/eval_pose.py --co3d_dir ... --co3d_anno_dir ...
 ```
 
-### Demo
+### Inference and Demo
 ```bash
-# Launch Gradio demo interface
+# Run Gradio demo
 python demo_gradio.py
 
-# Inference script
-python inference.py
+# Post-optimization
+python src/post_opt/simple_trainer.py default --data_dir ...
 ```
 
 ### Testing
 ```bash
-# Quick test script with automatic model download
-./test_model.sh
-
 # ScanNet testing
 ./test_scannet.sh
-
-# Manual test command (modify paths as needed)
-CUDA_VISIBLE_DEVICES=6 python -m src.main +experiment=re10k \
-checkpointing.load=./checkpoints/re10k.ckpt \
-mode=test \
-dataset/view_sampler=evaluation \
-dataset.view_sampler.num_context_views=6 \
-dataset.view_sampler.index_path=assets/re10k_evaluation/re10k_ctx_6v_tgt_8v_n50.json \
-test.compute_scores=true
-
-# ScanNet manual test command
-CUDA_VISIBLE_DEVICES=0 python -m src.main +experiment=scannet \
-data_loader.train.batch_size=1 \
-'dataset.roots'='["/tmp/scannet"]' \
-dataset/view_sampler=evaluation \
-dataset.view_sampler.num_context_views=6 \
-dataset.view_sampler.index_path=assets/scannet_index.json \
-mode=test \
-test.compute_scores=true \
-checkpointing.pretrained_model=checkpoints/re10k.ckpt \
-output_dir=outputs/scannet-256x256
-
-# Download model programmatically
-python test_re10k.py
-
-# Download AnySplat model from Hugging Face (simple version)
-python download_model_simple.py
-
-# Direct ScanNet test (handles missing dependencies gracefully)
-python test_scannet_direct.py --data_dir /tmp/scannet
-```
-
-### Code Quality
-```bash
-# Linting with ruff (configured in requirements.txt)
-ruff check src/
-
-# Code formatting with black
-black src/
+python test_scannet_direct.py
 ```
 
 ## Architecture Overview
 
-### Core Components
+### Core Source Structure
+- `src/model/`: Core model implementations
+  - `encoder/`: Transformer-based geometry encoders (AnySplat encoder, CRoCo backbone)
+  - `decoder/`: Splatting decoders with CUDA implementations
+  - `model/anysplat.py`: Main model class with HuggingFace integration
+- `src/dataset/`: Dataset loaders for CO3D, DL3DV, ScanNet++
+- `src/loss/`: Loss functions for training
+- `src/geometry/`: Geometric utilities and transformations
+- `src/visualization/`: Rendering and visualization tools
 
-1. **Model Architecture** (`src/model/`):
-   - **Encoder** (`src/model/encoder/`): Transformer-based geometry encoder with multiple backbone options (CroCo, DINO, ResNet)
-   - **Decoder** (`src/model/decoder/`): CUDA-based splatting decoder for rendering
-   - **Heads** (`src/model/encoder/heads/`): Three decoder heads (F_G, F_D, F_C) for Gaussian parameters, depth, and camera poses
+### Configuration System
+The project uses Hydra for configuration management:
+- `config/main.yaml`: Main configuration entry point
+- `config/model/`: Model-specific configurations (encoder, decoder)
+- `config/dataset/`: Dataset configurations
+- `config/loss/`: Loss function configurations
 
-2. **Dataset System** (`src/dataset/`):
-   - Supports multiple datasets: CO3Dv2, DL3DV, ScanNet++, ScanNet
-   - View samplers for different training strategies: all, arbitrary, bounded, evaluation, rank
-   - Data shims for augmentation, cropping, geometry processing, loading, normalization, patching
+### Key Model Components
+1. **AnySplat Main Model** (`src/model/model/anysplat.py`): HuggingFace-compatible main model
+2. **Encoder** (`src/model/encoder/anysplat.py`): Transformer-based geometry encoder
+3. **Decoder** (`src/model/decoder/decoder_splatting_cuda.py`): CUDA-optimized splatting decoder
+4. **Gaussian Adapter** (`src/model/encoder/common/gaussian_adapter.py`): Converts features to Gaussian parameters
 
-3. **Loss Functions** (`src/loss/`):
-   - Multiple loss types: MSE, SSIM, LPIPS, depth consistency, normal consistency, Huber, opacity
-   - Configurable loss combinations via YAML configuration
-
-4. **Configuration System**:
-   - Hydra-based configuration with hierarchical YAML files in `config/`
-   - Experiment configs (`config/experiment/`): dl3dv, co3d, scannetpp, scannet, re10k, multi-dataset
-   - Model configs (`config/model/`): encoder and decoder configurations
-   - Dataset configs (`config/dataset/`): dataset-specific and view sampler configurations
+### Training Framework
+- Uses PyTorch Lightning for training orchestration
+- Supports multi-GPU and multi-node distributed training
+- WandB integration for experiment tracking
+- Configurable view sampling strategies for different datasets
 
 ### Key Dependencies
-
-- PyTorch 2.2.0 with CUDA 12.1
-- Lightning for training framework
+- PyTorch 2.2.0+ with CUDA 12.1+
+- PyTorch3D (included as submodule)
+- gsplat for Gaussian splatting operations
 - Hydra for configuration management
-- gsplat for 3D Gaussian splatting operations
-- xformers for efficient transformer operations
-- PyTorch3D for 3D geometry operations
+- WandB for experiment tracking
+- HuggingFace Hub for model distribution
 
-### Data Flow
+## Important Implementation Notes
 
-1. Input: Set of uncalibrated images
-2. Encoder: Transformer processes images to extract features
-3. Heads: Three decoder heads predict:
-   - Gaussian parameters (μ, σ, r, s, c)
-   - Depth maps (D)
-   - Camera poses (p)
-4. Voxelization: Differentiable voxelization converts pixel-wise to pre-voxel 3D Gaussians
-5. Rendering: Multi-view images and depth maps rendered from voxelized Gaussians
-6. Supervision: RGB loss and geometry losses using pseudo-geometry priors from VGGT
-
-### Training Configuration
-
-- Uses wandb for experiment tracking
-- Supports multi-node distributed training
-- Checkpointing every 5000 steps
-- Gradient clipping at 0.5
-- Learning rate: 1.5e-4 with 2000 warmup steps
-- Backbone learning rate multiplier: 0.1
-
-### File Organization
-
-- `src/main.py`: Main training entry point with Hydra configuration
-- `inference.py`: Standalone inference script
-- `demo_gradio.py`: Gradio web interface
-- `test_model.sh`: Quick test script with automatic model download
-- `test_scannet.sh`: ScanNet testing script with automatic model download
-- `test_scannet_simple.py`: Simple ScanNet test using HuggingFace model directly
-- `train_scannet.sh`: ScanNet training script
-- `download_model_simple.py`: Simple AnySplat model downloader from Hugging Face
-- `test_scannet_direct.py`: Direct ScanNet test with graceful dependency handling
-- `test_re10k.py`: Model download and checkpoint management script
-- `src/eval_nvs.py`, `src/eval_pose.py`: Evaluation scripts for novel view synthesis and pose estimation
-- `src/dataset/dataset_scannet.py`: ScanNet dataset implementation
-- `src/misc/`: Utility functions for image I/O, camera utils, benchmarking, logging
-- `src/geometry/`: 3D geometry operations and camera embeddings
-- `src/post_opt/`: Post-optimization scripts for refining results
-- `assets/scannet_index.json`: ScanNet evaluation index configuration
-- `examples/`: Example input data and usage demonstrations
-
-## Development Notes
-
-- The codebase uses beartype and jaxtyping for runtime type checking
-- Configuration is managed through Hydra with hierarchical YAML files in `config/`
-- The model can be loaded from Hugging Face Hub (`lhjiang/anysplat`)
-- Supports both training from scratch and loading pretrained checkpoints
-- Uses Lightning for distributed training and checkpointing
-- Code quality tools: ruff for linting, black for formatting
-- Custom PyTorch3D and gsplat installations from specific sources (see requirements.txt)
-
-### Quick Development Workflow
-
-1. Environment setup: `conda create -y -n anysplat python=3.10 && conda activate anysplat`
-2. Install dependencies: `pip install torch==2.2.0 torchvision==0.17.0 torchaudio==2.2.0 --index-url https://download.pytorch.org/whl/cu121 && pip install -r requirements.txt`
-3. Quick test: `./test_model.sh`
-4. Code quality: `ruff check src/ && black src/`
-5. Train: `python src/main.py +experiment=dl3dv trainer.num_nodes=1`
+- The model inherits from `huggingface_hub.PyTorchModelHubMixin` for easy model sharing
+- CUDA kernels are used extensively for Gaussian splatting operations
+- The differentiable voxelization module is a core innovation for handling arbitrary view counts
+- Camera pose prediction and depth estimation are jointly optimized with Gaussian parameters
+- The codebase supports three main datasets: CO3Dv2, DL3DV, and ScanNet++, each with different view sampling strategies

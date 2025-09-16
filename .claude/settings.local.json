@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(python:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(HYDRA_FULL_ERROR=1 python -c \"import sys; sys.path.append(''''.''''); from hydra import initialize, compose; initialize(config_path=''''config''''); cfg = compose(config_name=''''main'''', overrides=[''''+experiment=scannet''''])\")",
+      "Bash(export HYDRA_FULL_ERROR=1)"
     ],
     "deny": [],
     "ask": []
