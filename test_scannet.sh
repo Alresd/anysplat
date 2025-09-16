@@ -16,6 +16,17 @@ if [ ! -f "$CHECKPOINT_PATH" ]; then
         CHECKPOINT_PATH="checkpoints/anysplat.ckpt"
     elif [ -f "./checkpoints/re10k.ckpt" ]; then
         CHECKPOINT_PATH="checkpoints/re10k.ckpt"
+    elif [ -d "./checkpoints/anysplat_hf" ]; then
+        # Convert HuggingFace model to checkpoint format
+        echo "Found HuggingFace model directory. Converting to checkpoint format..."
+        python convert_hf_to_checkpoint.py
+        if [ -f "./checkpoints/anysplat.ckpt" ]; then
+            CHECKPOINT_PATH="checkpoints/anysplat.ckpt"
+            echo "Successfully converted HuggingFace model to checkpoint format"
+        else
+            echo "Failed to convert HuggingFace model"
+            exit 1
+        fi
     else
         echo "No checkpoint found! Please download the model first."
         exit 1
