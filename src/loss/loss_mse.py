@@ -51,8 +51,13 @@ class LossMse(Loss[LossMseCfg, LossMseCfgWrapper]):
             mask = torch.ones_like(alpha, device=alpha.device).bool()
 
         # Rearrange and mask predicted and ground truth images
-        pred_img = prediction.color.permute(0, 1, 3, 4, 2)[mask] 
-        gt_img = ((batch["context"]["image"][:, batch["using_index"]] + 1) / 2).permute(0, 1, 3, 4, 2)[mask]
+        # Only use the context views portion of the prediction and mask
+        num_context_views = len(batch["using_index"])
+        pred_color_context = prediction.color[:, :num_context_views]  # Only context views
+        mask_context = mask[:, :num_context_views] if mask.dim() > 2 else mask  # Only context views mask
+
+        pred_img = pred_color_context.permute(0, 1, 3, 4, 2)[mask_context]
+        gt_img = ((batch["context"]["image"][:, batch["using_index"]] + 1) / 2).permute(0, 1, 3, 4, 2)[mask_context]
 
         delta = pred_img - gt_img
 
