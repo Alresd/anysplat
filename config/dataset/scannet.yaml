@@ -4,7 +4,9 @@ defaults:
 name: scannet
 make_baseline_1: false
 augment: true
+roots: []
 
+original_image_shape: [480, 640]
 input_image_shape: [256, 256]
 background_color: [0.0, 0.0, 0.0]
 cameras_are_circular: false
