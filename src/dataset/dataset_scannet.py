@@ -161,6 +161,7 @@ class DatasetScannet(Dataset):
             "near": self.get_bound("near", len(context_index)),
             "far": self.get_bound("far", len(context_index)),
             "index": context_index,
+            "valid_mask": torch.ones_like(context_images)[:, 0].bool(),  # [N, H, W]
         }
 
         if self.cfg.load_depth:
@@ -209,6 +210,7 @@ class DatasetScannet(Dataset):
             "near": self.get_bound("near", len(target_indices)),
             "far": self.get_bound("far", len(target_indices)),
             "index": target_indices,
+            "valid_mask": torch.ones_like(target_images)[:, 0].bool(),  # [N, H, W]
         }
 
         if self.cfg.load_depth:
