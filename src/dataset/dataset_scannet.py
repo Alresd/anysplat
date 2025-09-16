@@ -17,12 +17,10 @@ from torch.utils.data import Dataset
 from .dataset import DatasetCfgCommon
 from .shims.augmentation_shim import apply_augmentation_shim
 from .shims.crop_shim import apply_crop_shim
-from .shims.normalization_shim import apply_normalization_shim
 from .types import Stage
 from .view_sampler import ViewSampler, ViewSamplerEvaluation
 from ..evaluation.evaluation_index_generator import IndexEntry
 from ..geometry.projection import get_fov
-from ..misc.cropping import get_cropping_bounds
 
 
 @dataclass
@@ -252,7 +250,6 @@ class DatasetScannet(Dataset):
             example = apply_augmentation_shim(example)
 
         example = apply_crop_shim(example, tuple(self.cfg.input_image_shape))
-        example = apply_normalization_shim(example)
 
         return example
 
