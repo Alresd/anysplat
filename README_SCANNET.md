@@ -4,16 +4,16 @@
 
 您遇到的 `jaxtyping` 模块缺失错误是因为环境中缺少一些依赖。以下是解决方案：
 
-## 方案1：安装缺失依赖（推荐）
+## 方案1：自动修复依赖（推荐）
 
 ```bash
-# 安装缺失的依赖
+# 运行自动修复脚本（会安装缺失的依赖）
+python fix_torch_scatter.py
+
+# 安装其他缺失的依赖
 pip install jaxtyping beartype
 
-# 然后运行下载脚本
-python download_model.py
-
-# 或者直接运行ScanNet测试
+# 然后直接运行ScanNet测试
 ./test_scannet.sh
 ```
 
@@ -99,13 +99,22 @@ output_dir=outputs/scannet-256x256
 # 1. 确保在正确的conda环境中
 conda activate anysplat
 
-# 2. 安装缺失的依赖
+# 2. 修复torch_scatter依赖
+python fix_torch_scatter.py
+
+# 3. 安装其他缺失的依赖
 pip install jaxtyping beartype
 
-# 3. 下载模型
-python download_model.py
+# 4. 运行ScanNet测试（会自动下载模型）
+./test_scannet.sh
+```
 
-# 4. 运行ScanNet测试
+## 如果torch_scatter仍然有问题
+
+代码已经配置了回退机制，如果torch_scatter无法安装，会自动使用PyTorch原生实现：
+
+```bash
+# 直接运行测试，代码会自动处理依赖问题
 ./test_scannet.sh
 ```
 

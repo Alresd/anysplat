@@ -27,7 +27,12 @@ from src.model.encoder.vggt.utils.geometry import (
 from src.model.encoder.vggt.utils.pose_enc import pose_encoding_to_extri_intri
 from src.utils.geometry import get_rel_pos  # used for model hub
 from torch import nn, Tensor
-from torch_scatter import scatter_add, scatter_max
+
+try:
+    from torch_scatter import scatter_add, scatter_max
+except ImportError:
+    print("torch_scatter not found, using PyTorch native implementation")
+    from ...utils.scatter_ops import scatter_add, scatter_max
 
 from ..types import Gaussians
 from .backbone import Backbone, BackboneCfg, get_backbone
