@@ -59,6 +59,7 @@ class ViewSamplerBounded(ViewSampler[ViewSamplerBoundedCfg]):
         #     max_gap = self.cfg.max_distance_between_context_views
         #     min_gap = self.cfg.min_distance_between_context_views
 
+        num_context_views = self.cfg.num_context_views
         min_gap, max_gap = self.num_ctxt_gap_mapping[num_context_views]
         max_gap = min(max_gap, num_views-1)
         # Pick the gap between the context views.
