@@ -104,7 +104,7 @@ class DatasetScannet(Dataset):
                                     [None,:3,:3].repeat(extrinsics.shape[0], 0)).float()
 
         # Sample views using view_sampler (following BEV-Splat approach)
-        context_index, target_indices = self.view_sampler.sample(
+        context_index, target_indices, overlap = self.view_sampler.sample(
             scene,
             extrinsics,
             intrinsics,
@@ -121,7 +121,7 @@ class DatasetScannet(Dataset):
         # Load context images and depths
         context_images = []
         context_depths = []
-        for idx_val in context_indices:
+        for idx_val in context_index:
             idx_int = int(idx_val.item())
             img_path = os.path.join(path, 'color', f'{idx_int}.jpg')
             if not os.path.exists(img_path):
@@ -155,12 +155,12 @@ class DatasetScannet(Dataset):
 
         # Prepare context data
         context_content = {
-            "extrinsics": extrinsics[context_indices],
-            "intrinsics": intrinsics_norm[context_indices],
+            "extrinsics": extrinsics[context_index],
+            "intrinsics": intrinsics_norm[context_index],
             "image": context_images,
-            "near": self.get_bound("near", len(context_indices)),
-            "far": self.get_bound("far", len(context_indices)),
-            "index": context_indices,
+            "near": self.get_bound("near", len(context_index)),
+            "far": self.get_bound("far", len(context_index)),
+            "index": context_index,
         }
 
         if self.cfg.load_depth:
